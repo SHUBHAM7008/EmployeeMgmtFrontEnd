@@ -36,3 +36,171 @@
     transform: rotate(360deg);
   }
 }
+/* Container and page layout */
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+/* Page title */
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 25px;
+  color: #2c3e50;
+}
+
+/* Search input */
+input[type="text"] {
+  width: 100%;
+  max-width: 400px;
+  display: block;
+  margin: 0 auto 30px auto;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border: 2px solid #bdc3c7;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+/* Employee list container with scroll */
+.employee-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px; /* space for scrollbar */
+  margin-bottom: 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+}
+
+/* Employee card styling */
+.employee-card {
+  background-color: white;
+  margin: 12px 20px;
+  padding: 18px 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+  transition: box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.employee-card:hover {
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.15);
+}
+
+.employee-card p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.3;
+  color: #444;
+}
+
+.employee-card strong {
+  color: #555;
+}
+
+/* Buttons inside employee card */
+.employee-card button {
+  margin-top: 10px;
+  width: 90px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+.employee-card button:first-of-type {
+  background-color: #e74c3c;
+  color: white;
+  margin-bottom: 6px;
+}
+
+.employee-card button:first-of-type:hover {
+  background-color: #c0392b;
+}
+
+.employee-card button:last-of-type {
+  background-color: #95a5a6;
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Add form container */
+.add-form {
+  max-width: 450px;
+  margin: 0 auto 60px auto;
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+}
+
+.add-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+/* Inputs inside add form */
+.add-form input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 18px;
+  font-size: 1rem;
+  border: 2px solid #bdc3c7;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+}
+
+.add-form input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+/* Submit button */
+.add-form button[type="submit"] {
+  width: 100%;
+  padding: 12px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-form button[type="submit"]:hover {
+  background-color: #2980b9;
+}
+
+/* Scrollbar style for employee list */
+.employee-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.employee-list::-webkit-scrollbar-thumb {
+  background-color: #3498db;
+  border-radius: 10px;
+}
+
+.employee-list::-webkit-scrollbar-track {
+  background: #ecf0f1;
+}
