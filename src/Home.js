@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const API_URL = 'http://localhost:8080/api/employees';
+const DEFAULT_IMAGE = 'https://via.placeholder.com/100x100.png?text=EMP';
 
 const styles = {
   container: {
@@ -22,6 +23,12 @@ const styles = {
     letterSpacing: 1,
     textShadow: '0 2px 8px rgba(44, 62, 80, 0.05)',
   },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: '50%',
+    objectFit: 'cover'
+  },
   searchInput: {
     width: '100%',
     maxWidth: 420,
@@ -33,7 +40,6 @@ const styles = {
     borderRadius: 8,
     backgroundColor: '#f7fafc',
     boxShadow: '0 1px 3px rgba(44,62,80,0.04)',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
     outline: 'none',
   },
   tableContainer: {
@@ -50,8 +56,6 @@ const styles = {
     borderCollapse: 'collapse',
     fontSize: 16,
     background: '#fff',
-    borderRadius: 10,
-    overflow: 'hidden',
   },
   th: {
     background: '#3498db',
@@ -64,19 +68,20 @@ const styles = {
     padding: '12px 12px',
     borderBottom: '1px solid #e0e4ea',
     background: '#f9f9f9',
+    verticalAlign: 'middle',
   },
   actionTd: {
     display: 'flex',
-    gap: 10,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     padding: '12px 12px',
     borderBottom: '1px solid #e0e4ea',
     background: '#f9f9f9',
   },
   button: {
-    marginTop: 0,
     width: 90,
-    padding: '6px 12px',
+    padding: '6px',
     border: 'none',
     borderRadius: 5,
     fontWeight: 600,
@@ -85,6 +90,9 @@ const styles = {
     transition: 'background-color 0.22s, box-shadow 0.22s',
     boxShadow: '0 2px 6px rgba(52,152,219,0.07)',
     outline: 'none',
+    marginTop: 38,
+    marginBottom: 35,
+    display: 'inline-block',
   },
   deleteButton: {
     backgroundColor: '#e74c3c',
@@ -93,7 +101,20 @@ const styles = {
   editButton: {
     backgroundColor: '#5c6bc0',
     color: 'white',
-    opacity: 0.92,
+  },
+  exportButton: {
+    display: 'block',
+    margin: '0 auto 20px auto',
+    padding: '12px 28px',
+    fontSize: 17,
+    borderRadius: 8,
+    background: 'linear-gradient(90deg, #f39c12 60%, #f1c40f 100%)',
+    color: 'white',
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: 600,
+    boxShadow: '0 2px 10px rgba(241,196,15,0.10)',
+    width: 200,
   },
   addForm: {
     maxWidth: 550,
@@ -112,7 +133,6 @@ const styles = {
     border: '2px solid #b0bec5',
     borderRadius: 8,
     backgroundColor: '#f7fafc',
-    transition: 'border-color 0.2s',
     outline: 'none',
   },
   submitButton: {
@@ -125,8 +145,6 @@ const styles = {
     border: 'none',
     borderRadius: 10,
     cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(52,152,219,0.11)',
-    transition: 'background-color 0.22s, box-shadow 0.22s',
   },
   cancelButton: {
     marginTop: 12,
@@ -139,7 +157,6 @@ const styles = {
     border: 'none',
     borderRadius: 10,
     cursor: 'pointer',
-    transition: 'background-color 0.22s',
   },
   addButton: {
     display: 'block',
@@ -153,20 +170,51 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 600,
     boxShadow: '0 2px 10px rgba(46,204,113,0.10)',
-    transition: 'background 0.22s, box-shadow 0.22s',
   },
 };
 
-function App() {
+function Home() {
   const [employees, setEmployees] = useState([]);
+  const [imageUrls, setImageUrls] = useState({}); // { [id]: objectUrl }
   const [filterText, setFilterText] = useState('');
-  const [mode, setMode] = useState('list'); // 'list' | 'add' | 'edit'
+  const [mode, setMode] = useState('list');
   const [form, setForm] = useState({ name: '', email: '', department: '', salary: '' });
   const [editId, setEditId] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
+  // Fetch employees on mount
   useEffect(() => {
     fetchEmployees();
+    // Cleanup image object URLs on unmount
+    return () => {
+      Object.values(imageUrls).forEach(url => {
+        if (url && url !== DEFAULT_IMAGE) URL.revokeObjectURL(url);
+      });
+    };
+    // eslint-disable-next-line
   }, []);
+
+  // Fetch images for all employees
+  useEffect(() => {
+    employees.forEach(emp => {
+      if (!imageUrls[emp.id]) {
+        fetch(`${API_URL}/${emp.id}/image`)
+          .then(res => {
+            if (!res.ok) throw new Error('No image');
+            return res.blob();
+          })
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            setImageUrls(prev => ({ ...prev, [emp.id]: url }));
+          })
+          .catch(() => {
+            setImageUrls(prev => ({ ...prev, [emp.id]: DEFAULT_IMAGE }));
+          });
+      }
+    });
+    // eslint-disable-next-line
+  }, [employees]);
 
   async function fetchEmployees() {
     try {
@@ -188,12 +236,22 @@ function App() {
   async function handleDelete(id) {
     if (!window.confirm('Are you sure you want to delete this employee?')) return;
     await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+    setImageUrls(prev => {
+      // Clean up object URL for deleted employee
+      if (prev[id] && prev[id] !== DEFAULT_IMAGE) URL.revokeObjectURL(prev[id]);
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
     fetchEmployees();
   }
 
   function openAddForm() {
     setForm({ name: '', email: '', department: '', salary: '' });
+    setSelectedFile(null);
+    setPreviewImage(null);
     setMode('add');
+    setEditId(null);
   }
 
   function openEditForm(emp) {
@@ -203,16 +261,41 @@ function App() {
       department: emp.department,
       salary: emp.salary,
     });
+    // Show preview if image is already fetched
+    if (imageUrls[emp.id] && imageUrls[emp.id] !== DEFAULT_IMAGE) {
+      setPreviewImage(imageUrls[emp.id]);
+    } else {
+      setPreviewImage(null);
+    }
     setEditId(emp.id);
+    setSelectedFile(null);
     setMode('edit');
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files[0];
+    setSelectedFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        setPreviewImage(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreviewImage(null);
+    }
   }
 
   async function handleAddSubmit(e) {
     e.preventDefault();
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => formData.append(key, value));
+    if (selectedFile) {
+      formData.append('image', selectedFile);
+    }
     await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: formData,
     });
     setMode('list');
     fetchEmployees();
@@ -220,10 +303,14 @@ function App() {
 
   async function handleEditSubmit(e) {
     e.preventDefault();
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => formData.append(key, value));
+    if (selectedFile) {
+      formData.append('image', selectedFile);
+    }
     await fetch(`${API_URL}/${editId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: formData,
     });
     setMode('list');
     setEditId(null);
@@ -233,7 +320,39 @@ function App() {
   function handleCancel() {
     setMode('list');
     setEditId(null);
+    setSelectedFile(null);
+    setPreviewImage(null);
   }
+
+  // --- EXPORT TO CSV ---
+  function exportToCSV(data) {
+    if (!data.length) {
+      alert('No data to export!');
+      return;
+    }
+    const header = ['Name', 'Email', 'Department', 'Salary'];
+    const rows = data.map(emp => [
+      `"${emp.name}"`,
+      `"${emp.email}"`,
+      `"${emp.department}"`,
+      `"${emp.salary}"`
+    ]);
+    const csvContent =
+      header.join(',') + '\n' +
+      rows.map(e => e.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'employees.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+  // --- END EXPORT TO CSV ---
 
   return (
     <div style={styles.container}>
@@ -249,11 +368,18 @@ function App() {
             style={styles.searchInput}
           />
 
-        
+          <button
+            onClick={() => exportToCSV(filteredEmployees)}
+            style={styles.exportButton}
+          >
+            Export to CSV
+          </button>
+
           <div style={styles.tableContainer}>
             <table style={styles.table}>
               <thead>
                 <tr>
+                  <th style={styles.th}>Image</th>
                   <th style={styles.th}>Name</th>
                   <th style={styles.th}>Email</th>
                   <th style={styles.th}>Department</th>
@@ -264,11 +390,18 @@ function App() {
               <tbody>
                 {filteredEmployees.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ ...styles.td, textAlign: "center" }}>No employees found.</td>
+                    <td colSpan={6} style={{ ...styles.td, textAlign: "center" }}>No employees found.</td>
                   </tr>
                 ) : (
                   filteredEmployees.map(emp => (
                     <tr key={emp.id}>
+                      <td style={styles.td}>
+                        <img
+                          src={imageUrls[emp.id] || DEFAULT_IMAGE}
+                          alt="profile"
+                          style={styles.image}
+                        />
+                      </td>
                       <td style={styles.td}>{emp.name}</td>
                       <td style={styles.td}>{emp.email}</td>
                       <td style={styles.td}>{emp.department}</td>
@@ -292,7 +425,6 @@ function App() {
                 )}
               </tbody>
             </table>
-            
           </div>
           <button onClick={openAddForm} style={styles.addButton}>
             Add Employee
@@ -304,6 +436,7 @@ function App() {
         <form
           onSubmit={mode === 'add' ? handleAddSubmit : handleEditSubmit}
           style={styles.addForm}
+          encType="multipart/form-data"
         >
           <h2>{mode === 'add' ? 'Add New Employee' : 'Update Employee'}</h2>
           <input
@@ -338,6 +471,15 @@ function App() {
             onChange={e => setForm({ ...form, salary: e.target.value })}
             required
           />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+          {previewImage && (
+            <img src={previewImage} alt="Preview" style={styles.image} />
+          )}
+
           <button type="submit" style={styles.submitButton}>
             {mode === 'add' ? 'Add Employee' : 'Update Employee'}
           </button>
@@ -350,4 +492,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;
